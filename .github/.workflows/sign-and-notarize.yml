@@ -17,25 +17,25 @@ jobs:
         run: |
           xcodebuild clean build \
             -project sample/sample.xcodeproj \
+            -scheme sample \
             -destination platform=macOS \
             -derivedDataPath /Users/runner/work/demo-macos/demo-macos/build \
             -configuration Release \
             CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO
+          mv ./build/Build/Products/Release/sample.app ./build/sample.app
 
       - name: Install SignPath MacOSCryptoTokenKit
         run: |
-          mkdir tools
-          mkdir _tmp
           # TODO: replace with real download URL once available
           curl -o SignPathCryptoTokenKit.dmg https://www.rubicon.eu/downloads/e60fc2e4-e55c-4438-9010-b6f934b977cd/SignPathCryptoTokenKit_v2.0.0-pre_8a676e1.dmg
-          hdutil attach ./tools/SignPathCryptoTokenKit.dmg -mountroot ./tools
+          hdiutil attach ./SignPathCryptoTokenKit.dmg -mountroot ./tools
 
       - name: Sign .app file 
         env: 
           SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }} 
           SIGNPATH_SIGNING_POLICY_SLUG: "${{ env.IS_RELEASE_BUILD == 'true' && 'release-signing' || 'test-signing' }}" 
         run: |
-          open "./tools/SignPathCryptoTokenKit.app" --args \ 
+          open "./tools/SignPathCryptoTokenKit/SignPathCryptoTokenKit.app" --args \ 
             --organization-id ${{ vars.SIGNPATH_ORGANIZATION_ID }} \
             --project-slug ${{ vars.SIGNPATH_PROJECT_SLUG }} \ 
             --signing-policy-slug ${{ env.SIGNPATH_RELEASE_SIGNING_POLICY_SLUG }} 
@@ -45,11 +45,11 @@ jobs:
           # sign 
           codesign -f --timestamp --options=runtime \ 
             -s "${{ vars.CERTIFICATE_SUBJECT_NAME }}" \ 
-            --entitlements sample/sample.entitlements \ 
+            --entitlements sample/sample/sample.entitlements \ 
             ./build/sample.app 
 
           # check signature 
-          codesign -v --verbose ./sample.app  
+          codesign -v --verbose ./build/sample.app  
 
       - name: Create .dmg file 
         run: |
