@@ -43,13 +43,13 @@ jobs:
           sleep 5 # wait for token to be registered  
 
           # sign 
-          codesign -f --timestamp --options=runtime \ 
-            -s "${{ vars.CERTIFICATE_SUBJECT_NAME }}" \ 
-            --entitlements sample/sample/sample.entitlements \ 
-            ./build/sample.app 
+          codesign -f --timestamp --options=runtime \
+            -s "${{ vars.CERTIFICATE_SUBJECT_NAME }}" \
+            --entitlements sample/sample/sample.entitlements \
+            ./build/sample.app
 
           # check signature 
-          codesign -v --verbose ./build/sample.app  
+          codesign -dv --verbose ./build/sample.app
 
       - name: Create .dmg file 
         run: |
@@ -64,7 +64,7 @@ jobs:
             ./build/sample.dmg 
 
           # check signature 
-          codesign -v --verbose ./build/sample.dmg  
+          codesign -dv --verbose ./build/sample.dmg  
 
       - name: Notarize .dmg file 
         if: ${{ env.IS_RELEASE_BUILD == 'true' }} 
