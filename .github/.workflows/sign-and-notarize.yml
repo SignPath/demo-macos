@@ -1,0 +1,87 @@
+name: Signs and notarizes a sample app
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sign_and_notarize:
+    runs-on: macos-latest
+    env:
+      IS_RELEASE_BUILD: ${{ github.ref == 'refs/heads/main' && 'true' || false }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build
+        run: |
+          xcodebuild clean build \
+            -project sample/sample.xcodeproj \
+            -destination platform=macOS \
+            -derivedDataPath /Users/runner/work/demo-macos/demo-macos/build \
+            -configuration Release \
+            CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO
+
+      - name: Install SignPath MacOSCryptoTokenKit
+        run: |
+          mkdir tools
+          mkdir _tmp
+          # TODO: replace with real download URL once available
+          curl -o SignPathCryptoTokenKit.dmg https://www.rubicon.eu/downloads/e60fc2e4-e55c-4438-9010-b6f934b977cd/SignPathCryptoTokenKit_v2.0.0-pre_8a676e1.dmg
+          hdutil attach ./tools/SignPathCryptoTokenKit.dmg -mountroot ./tools
+
+      - name: Sign .app file 
+        env: 
+          SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }} 
+          SIGNPATH_SIGNING_POLICY_SLUG: "${{ env.IS_RELEASE_BUILD == 'true' && 'release-signing' || 'test-signing' }}" 
+        run: |
+          open "./tools/SignPathCryptoTokenKit.app" --args \ 
+            --organization-id ${{ vars.SIGNPATH_ORGANIZATION_ID }} \
+            --project-slug ${{ vars.SIGNPATH_PROJECT_SLUG }} \ 
+            --signing-policy-slug ${{ env.SIGNPATH_RELEASE_SIGNING_POLICY_SLUG }} 
+
+          sleep 5 # wait for token to be registered  
+
+          # sign 
+          codesign -f --timestamp --options=runtime \ 
+            -s "${{ vars.CERTIFICATE_SUBJECT_NAME }}" \ 
+            --entitlements sample/sample.entitlements \ 
+            ./build/sample.app 
+
+          # check signature 
+          codesign -v --verbose ./sample.app  
+
+      - name: Create .dmg file 
+        run: |
+          hdiutil create -format UDZO -srcfolder ./build/sample.app ./build/sample.dmg 
+
+      - name: Sign .dmg file 
+        run: |
+        # sign 
+        codesign -f --timestamp --options=runtime \ 
+          -s "${{ vars.CERTIFICATE_SUBJECT_NAME }}" \ 
+          --entitlements sample/sample.entitlements \ 
+          ./build/sample.dmg 
+
+        # check signature 
+        codesign -v --verbose ./build/sample.dmg  
+
+      - name: Notarize .dmg file 
+        if: ${{ env.IS_RELEASE_BUILD == 'true' }} 
+        run: |
+          # submit the software to Apple 
+          xcrun notarytool submit ./build/sample.dmg \ 
+            --apple-id ${{ vars.APPLE_ID }} \ 
+            --team-id ${{ vars.APPLE_TEAM_ID }} \ 
+            --password ${{ secrets.APPLE_NOTARIZATION_APP_SPECIFIC_PASSWORD }} \ 
+            --wait \ 
+            --timeout 15m 
+
+          # staple the notarization result 
+          xcrun stapler staple ./build/sample.dmg 
+
+      - name: Upload .dmg file as build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sample
+          path: ./build/sample.dmg
