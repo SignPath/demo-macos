@@ -57,14 +57,14 @@ jobs:
 
       - name: Sign .dmg file 
         run: |
-        # sign 
-        codesign -f --timestamp --options=runtime \ 
-          -s "${{ vars.CERTIFICATE_SUBJECT_NAME }}" \ 
-          --entitlements sample/sample.entitlements \ 
-          ./build/sample.dmg 
+          # sign
+          codesign -f --timestamp --options=runtime \ 
+            -s "${{ vars.CERTIFICATE_SUBJECT_NAME }}" \ 
+            --entitlements sample/sample.entitlements \ 
+            ./build/sample.dmg 
 
-        # check signature 
-        codesign -v --verbose ./build/sample.dmg  
+          # check signature 
+          codesign -v --verbose ./build/sample.dmg  
 
       - name: Notarize .dmg file 
         if: ${{ env.IS_RELEASE_BUILD == 'true' }} 
