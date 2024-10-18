@@ -35,9 +35,9 @@ jobs:
           SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }} 
           SIGNPATH_SIGNING_POLICY_SLUG: "${{ env.IS_RELEASE_BUILD == 'true' && 'release-signing' || 'test-signing' }}" 
         run: |
-          open "./tools/SignPathCryptoTokenKit/SignPathCryptoTokenKit.app" --args \ 
+          open "./tools/SignPathCryptoTokenKit/SignPathCryptoTokenKit.app" --args \
             --organization-id ${{ vars.SIGNPATH_ORGANIZATION_ID }} \
-            --project-slug ${{ vars.SIGNPATH_PROJECT_SLUG }} \ 
+            --project-slug ${{ vars.SIGNPATH_PROJECT_SLUG }} \
             --signing-policy-slug ${{ env.SIGNPATH_SIGNING_POLICY_SLUG }} 
 
           sleep 5 # wait for token to be registered  
