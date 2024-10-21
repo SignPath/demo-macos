@@ -40,7 +40,7 @@ jobs:
             --project-slug ${{ vars.SIGNPATH_PROJECT_SLUG }} \
             --signing-policy-slug ${{ env.SIGNPATH_SIGNING_POLICY_SLUG }}
 
-          sleep 5 # wait for token to be registered
+          sleep 20 # wait for token to be registered
 
           # sign
           codesign -f --timestamp --options=runtime \
