@@ -60,7 +60,7 @@ jobs:
           # sign
           codesign -f --timestamp --options=runtime \
             -s "${{ vars.CERTIFICATE_SUBJECT_NAME }}" \
-            --entitlements sample/sample.entitlements \
+            --entitlements sample/sample/sample.entitlements \
             ./build/sample.dmg
 
           # check signature
