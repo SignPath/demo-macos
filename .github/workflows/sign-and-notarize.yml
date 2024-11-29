@@ -26,7 +26,6 @@ jobs:
 
       - name: Install SignPath MacOSCryptoTokenKit
         run: |
-          # TODO: replace with real download URL once available
           curl -o SignPathCryptoTokenKit.dmg https://download.signpath.io/cryptoproviders/macos-cryptotokenkit/2.0.0/SignPathCryptoTokenKit.dmg
           codesign -dv --verbose SignPathCryptoTokenKit.dmg
           hdiutil attach ./SignPathCryptoTokenKit.dmg -mountroot ./tools
